@@ -4,6 +4,8 @@ import subprocess
 import ctypes
 import ctypes.util
 import os
+import platform
+import shutil
 from lib import util
 
 
@@ -20,6 +22,9 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
                     'volume':0,
                     'pipe':False
     }
+    exe = 'espeak'
+    commandLine = [exe]
+    libdir = None
 
     def init(self):
         self.process = None
@@ -33,19 +38,21 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
         args.append(text.encode('utf-8'))
 
     def runCommand(self,text,outFile):
-        args = ['espeak','-w',outFile]
+        args = list(self.commandLine)
+        args.extend(('-w', outFile))
         self.addCommonArgs(args,text)
         subprocess.call(args)
         return True
 
     def runCommandAndSpeak(self,text):
-        args = ['espeak']
+        args = list(self.commandLine)
         self.addCommonArgs(args,text)
         self.process = subprocess.Popen(args)
         while self.process.poll() == None and self.active: util.sleep(10)
 
     def runCommandAndPipe(self,text):
-        args = ['espeak','--stdout']
+        args = list(self.commandLine)
+        args.append('--stdout')
         self.addCommonArgs(args,text)
         self.process = subprocess.Popen(args,stdout=subprocess.PIPE)
         return self.process.stdout
@@ -79,7 +86,9 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
         if setting == 'voice':
             import re
             ret = []
-            out = subprocess.check_output(['espeak','--voices']).splitlines()
+            args = list(cls.commandLine)
+            args.append('--voices')
+            out = subprocess.check_output(args).splitlines()
             out.pop(0)
             for l in out:
                 voice = re.split('\s+',l.decode('utf-8').strip(),5)[3].replace('_',' ')
@@ -88,9 +97,26 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
         return None
 
     @staticmethod
+    def searchExe():
+        if platform.system() == 'Linux':
+            path = shutil.which('espeak-ng')
+            if (path != None):
+                ESpeakTTSBackend.exe = 'espeak-ng'
+                ESpeakTTSBackend.libdir = path[0:-len('bin/' + ESpeakTTSBackend.exe)] + 'lib'
+                ESpeakTTSBackend.commandLine = [ESpeakTTSBackend.exe]
+                datadir = ESpeakTTSBackend.libdir + '/espeak-ng-data'
+                if os.path.isdir(datadir):
+                    ESpeakTTSBackend.commandLine.append('--path=' + datadir)
+        util.LOG('ESpeakTTSBackend: commandLine = %s' % ESpeakTTSBackend.commandLine)
+
+    @staticmethod
     def available():
+        ESpeakTTSBackend.searchExe()
         try:
-            subprocess.call(['espeak','--version'], stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
+            args = list(ESpeakTTSBackend.commandLine)
+            args.append('--version')
+            subprocess.call(args, stdout=(
+                open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
         except:
             return False
         return True
