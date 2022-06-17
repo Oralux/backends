@@ -15,6 +15,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
                     'voice.eSpeak': None,
                     'voice.SAPI': None,
                     'voice.Cepstral': None,
+                    'voice.Voxin': None,
                     'remote_speed': 0,
                     'player_speed': 0,
                     'remote_pitch': 0,

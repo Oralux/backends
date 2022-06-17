@@ -21,6 +21,7 @@ from .cepstral import CepstralTTSBackend #, CepstralTTSOEBackend
 from .recite import ReciteTTSBackend
 #from voiceover import VoiceOverBackend #Can't test
 from .termux import TermuxTTSBackend
+from .voxin import VoxinTTSBackend
 
 
 backendsByPriority = [  SAPITTSBackend,
@@ -40,6 +41,7 @@ backendsByPriority = [  SAPITTSBackend,
                         ReciteTTSBackend,
 #                        GoogleTTSBackend,
 #                        SpeechUtilComTTSBackend,
+                        VoxinTTSBackend,
                         ESpeakCtypesTTSBackend,
                         LogOnlyTTSBackend
 ]
